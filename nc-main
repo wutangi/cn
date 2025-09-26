@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNC 工作台 - 专业 CNC 程序串联解决方案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36D399',
+            warning: '#FF9F43',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .transition-custom {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .hover-scale {
+        @apply hover:scale-105 transition-all duration-300;
+      }
+      .card-shadow {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      .floating-nav-item {
+        @apply relative flex items-center justify-center w-10 h-10 rounded-full bg-primary/90 text-white hover:bg-primary transition-all duration-300 cursor-pointer;
+      }
+      .floating-nav-item:hover::after {
+        @apply opacity-100 translate-x-0;
+      }
+      .floating-nav-item::after {
+        @apply content-['attr(data-text)'] absolute right-full mr-4 whitespace-nowrap bg-dark text-white px-3 py-1 rounded-md shadow-lg opacity-0 translate-x-4 transition-all duration-300 z-10 text-sm;
+      }
+      .active-dot {
+        @apply absolute w-3 h-3 bg-white rounded-full top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 scale-0;
+      }
+      .floating-nav-item.active .active-dot {
+        @apply scale-100;
+      }
+      .back-to-top {
+        @apply fixed bottom-6 right-6 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary/90 transition-all duration-300 opacity-0 invisible z-50;
+      }
+      .back-to-top.show {
+        @apply opacity-100 visible;
+      }
+    }
+  </style>
+</head>
+
+<body class="font-inter bg-light text-dark">
+    <div id="top"></div>
+  
+    <header id="navbar" class="fixed w-full top-0 z-50 transition-all duration-300 bg-white/90 backdrop-blur-md shadow-sm">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center space-x-2">
+          <div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <i class="fa fa-cogs text-white text-xl"></i>
+          </div>
+          <span class="text-xl font-bold text-primary">CNC 工作台</span>
+        </div>
+        
+                <nav class="hidden md:flex space-x-8">
+          <a href="#top" class="text-primary font-medium transition-custom">首页</a>
+          <a href="#features" class="text-dark hover:text-primary transition-custom">功能</a>
+          <a href="#process" class="text-dark hover:text-primary transition-custom">使用流程</a>
+          <a href="#feature-trial" class="text-dark hover:text-primary transition-custom">在线体验</a>
+          <a href="#screenshots" class="text-dark hover:text-primary transition-custom">界面展示</a>
+          <a href="#download" class="text-dark hover:text-primary transition-custom">下载</a>
+          <a href="#faq" class="text-dark hover:text-primary transition-custom">常见问题</a>
+        </nav>
+        
+        <div class="hidden md:block">
+          <a href="#download" class="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-lg transition-custom hover-scale">
+            立即下载
+          </a>
+        </div>
+        
+                <button id="menu-toggle" class="md:hidden text-dark hover:text-primary">
+          <i class="fa fa-bars text-xl"></i>
+        </button>
+      </div>
+    </div>
+    
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg absolute w-full">
+      <div class="container mx-auto px-4 py-3 space-y-3">
+        <a href="#top" class="block py-2 text-primary font-medium transition-custom">首页</a>
+        <a href="#features" class="block py-2 text-dark hover:text-primary transition-custom">功能</a>
+        <a href="#process" class="block py-2 text-dark hover:text-primary transition-custom">使用流程</a>
+        <a href="#feature-trial" class="block py-2 text-dark hover:text-primary transition-custom">在线体验</a>
+        <a href="#screenshots" class="block py-2 text-dark hover:text-primary transition-custom">界面展示</a>
+        <a href="#download" class="block py-2 text-dark hover:text-primary transition-custom">下载</a>
+        <a href="#faq" class="block py-2 text-dark hover:text-primary transition-custom">常见问题</a>
+        <a href="#download" class="block bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-center transition-custom">
+          立即下载
+        </a>
+      </div>
+    </div>
+  </header>
+
+    <div id="floating-nav" class="fixed right-4 top-1/2 transform -translate-y-1/2 z-40 hidden md:block">
+    <div class="flex flex-col space-y-4">
+      <div class="floating-nav-item active" data-target="top" data-text="首页">
+        <div class="active-dot"></div>
+        <i class="fa fa-home"></i>
+      </div>
+      <div class="floating-nav-item" data-target="features" data-text="功能">
+        <div class="active-dot"></div>
+        <i class="fa fa-th-large"></i>
+      </div>
+      <div class="floating-nav-item" data-target="process" data-text="使用流程">
+        <div class="active-dot"></div>
+        <i class="fa fa-sitemap"></i>
+      </div>
+      <div class="floating-nav-item" data-target="feature-trial" data-text="在线体验">
+        <div class="active-dot"></div>
+        <i class="fa fa-flask"></i>
+      </div>
+      <div class="floating-nav-item" data-target="screenshots" data-text="界面展示">
+        <div class="active-dot"></div>
+        <i class="fa fa-desktop"></i>
+      </div>
+      <div class="floating-nav-item" data-target="download" data-text="下载">
+        <div class="active-dot"></div>
+        <i class="fa fa-download"></i>
+      </div>
+      <div class="floating-nav-item" data-target="faq" data-text="常见问题">
+        <div class="active-dot"></div>
+        <i class="fa fa-question-circle"></i>
+      </div>
+    </div>
+  </div>
+
+    <button id="back-to-top" class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+  </button>
+  
+    <section id="top" class="pt-28 pb-20 md:pt-36 md:pb-28 bg-gradient-to-br from-primary/5 to-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-10 md:mb-0">
+          <h1 class="text-[clamp(2rem,5vw,3.5rem)] font-bold leading-tight text-dark mb-6">
+            CNC 程序自动串联<br>
+            <span class="text-primary">工作台</span>
+          </h1>
+          <p class="text-lg md:text-xl text-gray-600 mb-8 max-w-lg">
+            专业 CNC 程序管理解决方案，支持多程序整合、刀具参数管理和坐标系分配，提高加工效率。
+          </p>
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="#download" class="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-center font-medium transition-custom hover-scale">
+              <i class="fa fa-download mr-2"></i>立即下载
+            </a>
+            <a href="#process" class="bg-white border border-primary text-primary hover:bg-primary/5 px-8 py-3 rounded-lg text-center font-medium transition-custom hover-scale">
+              <i class="fa fa-play-circle mr-2"></i>查看使用流程
+            </a>
+          </div>
+          <div class="mt-8 flex items-center space-x-4">
+            <div class="flex -space-x-2">
+              <img src="https://picsum.photos/seed/user1/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-white">
+              <img src="https://picsum.photos/seed/user2/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-white">
+              <img src="https://picsum.photos/seed/user3/40/40" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-white">
+            </div>
+            <div>
+              <div class="flex items-center">
+                <i class="fa fa-star text-warning"></i>
+                <i class="fa fa-star text-warning"></i>
+                <i class="fa fa-star text-warning"></i>
+                <i class="fa fa-star text-warning"></i>
+                <i class="fa fa-star text-warning"></i>
+                <span class="ml-2 font-medium">5.0</span>
+              </div>
+              <p class="text-sm text-gray-600">来自全国 500+ CNC 工程师的信赖</p>
+            </div>
+          </div>
+        </div>
+        <div class="md:w-1/2 relative">
+          <div class="relative z-10 rounded-xl overflow-hidden shadow-2xl hover-scale">
+            <img src="https://picsum.photos/seed/cnc1/800/600" alt="CNC 工作台软件界面" class="w-full h-auto">
+            <div class="absolute inset-0 bg-gradient-to-t from-dark/50 to-transparent flex items-end">
+              <div class="p-6 text-white">
+                <h3 class="text-xl font-bold">专业 CNC 程序管理</h3>
+                <p>轻松整合多子程序，提高加工效率</p>
+              </div>
+            </div>
+          </div>
+          <div class="absolute top-10 -right-5 w-64 h-64 bg-secondary/20 rounded-full filter blur-3xl -z-10"></div>
+          <div class="absolute -bottom-5 -left-10 w-80 h-80 bg-primary/20 rounded-full filter blur-3xl -z-10"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section id="features" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">强大功能，简单操作</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          CNC 工作台集成了 CNC 程序管理所需的全部功能，从程序单解析到主程序生成，一站式解决方案
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-file-excel-o text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">程序单解析</h3>
+          <p class="text-gray-600">
+            自动读取 Excel 格式的刀具程序单，提取刀具规格、刀长、刃长、加工类型等参数，支持多文件批量处理。
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-cubes text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">工作台管理</h3>
+          <p class="text-gray-600">
+            创建多坐标系面板，支持拖拽添加 NC/PIM 文件，可视化分配程序到指定坐标系，直观管理加工流程。
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-sort-amount-asc text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">程序排序与标注</h3>
+          <p class="text-gray-600">
+            按刀号/坐标系排序，标注加工类型，支持自定义程序组，修改刀具号，提高加工效率和准确性。
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-code-fork text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">主程序生成</h3>
+          <p class="text-gray-600">
+            按排序规则合并子程序，自动处理程序头/尾，删除冗余代码，添加连接代码，生成可直接用于加工的主程序。
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-sliders text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">自定义规则</h3>
+          <p class="text-gray-600">
+            灵活配置程序头/尾删除关键字，自定义子程序间连接代码，满足不同加工需求和机床类型。
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-custom hover-scale border border-gray-100">
+          <div class="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+            <i class="fa fa-history text-primary text-2xl"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">日志与导出</h3>
+          <p class="text-gray-600">
+            实时记录操作日志，支持分析结果导出 CSV、最终主程序导出为 PIM/NC 格式，方便存档和分享。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section id="process" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">简单四步，完成 CNC 程序串联</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          从程序单解析到主程序生成，只需简单几步，大幅提高工作效率
+        </p>
+      </div>
+      
+      <div class="relative">
+                <div class="hidden md:block absolute top-1/2 left-0 w-full h-1 bg-primary/20 -translate-y-1/2 z-0"></div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
+                    <div class="flex flex-col items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg hover-scale">
+              1
+            </div>
+            <h3 class="text-xl font-bold mb-3">读取程序单</h3>
+            <p class="text-gray-600">
+              导入 Excel 格式的刀具程序单，系统自动解析并提取刀具参数
+            </p>
+          </div>
+          
+                    <div class="flex flex-col items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg hover-scale">
+              2
+            </div>
+            <h3 class="text-xl font-bold mb-3">创建工作台</h3>
+            <p class="text-gray-600">
+              设置坐标系参数，创建多坐标系面板，拖拽添加 CNC 程序文件
+            </p>
+          </div>
+          
+                    <div class="flex flex-col items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg hover-scale">
+              3
+            </div>
+            <h3 class="text-xl font-bold mb-3">排序与标注</h3>
+            <p class="text-gray-600">
+              按刀号/坐标系排序，标注加工类型，修改刀具号，自定义程序组
+            </p>
+          </div>
+          
+                    <div class="flex flex-col items-center text-center">
+            <div class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-2xl font-bold mb-6 shadow-lg hover-scale">
+              4
+            </div>
+            <h3 class="text-xl font-bold mb-3">生成主程序</h3>
+            <p class="text-gray-600">
+              系统自动合并子程序，生成可直接用于加工的主程序文件
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mt-16 text-center">
+        <a href="#download" class="inline-block bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-lg text-center font-medium transition-custom hover-scale">
+          <i class="fa fa-download mr-2"></i>立即体验
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="feature-trial" class="py-20 bg-primary/5">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">功能在线体验</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                无需下载，立即体验“CNC 工作台”强大的程序单解析能力。拖拽您的 Excel 程序单到下方区域，即刻查看刀具分析结果。
+            </p>
+        </div>
+
+        <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-custom">
+                <div class="flex flex-col items-center justify-center">
+                    <i class="fa fa-upload text-primary text-4xl mb-4"></i>
+                    <h3 class="text-xl font-bold text-dark">拖拽 Excel 文件到此处</h3>
+                    <p class="text-gray-500 mt-2">或 <span class="text-primary font-medium">点击选择文件</span></p>
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
+                </div>
+            </div>
+
+            <div id="status-message" class="text-center mt-4 text-lg min-h-[28px]"></div>
+
+            <div id="result-area" class="mt-8 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-2xl font-bold">刀具长度分析结果</h3>
+                    <button id="export-csv" class="bg-secondary hover:bg-secondary/90 text-white px-5 py-2 rounded-lg font-medium transition-custom hover-scale w-full sm:w-auto">
+                        <i class="fa fa-download mr-2"></i>导出为 CSV
+                    </button>
+                </div>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table id="result-table" class="min-w-full bg-white text-center">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 font-bold uppercase text-sm text-gray-600 border-b">刀具规格</th>
+                                <th class="py-3 px-4 font-bold uppercase text-sm text-gray-600 border-b">类型</th>
+                                <th class="py-3 px-4 font-bold uppercase text-sm text-gray-600 border-b">最大刀长 (mm)</th>
+                                <th class="py-3 px-4 font-bold uppercase text-sm text-gray-600 border-b">最大刃长 (mm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </section>
+
+    <section id="screenshots" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">直观易用的界面设计</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          精心设计的用户界面，简化 CNC 程序管理流程，提高工作效率
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="rounded-xl overflow-hidden shadow-xl hover-scale">
+          <img src="https://picsum.photos/seed/cnc2/800/600" alt="程序单加载界面" class="w-full h-auto">
+          <div class="p-6 bg-white">
+            <h3 class="text-xl font-bold mb-2">程序单加载界面</h3>
+            <p class="text-gray-600">
+              支持拖拽和文件选择两种方式加载 Excel 程序单，直观展示文件列表，支持删除和清空操作
+            </p>
+          </div>
+        </div>
+        
+                <div class="rounded-xl overflow-hidden shadow-xl hover-scale">
+          <img src="https://picsum.photos/seed/cnc3/800/600" alt="工作台界面" class="w-full h-auto">
+          <div class="p-6 bg-white">
+            <h3 class="text-xl font-bold mb-2">工作台界面</h3>
+            <p class="text-gray-600">
+              多坐标系面板设计，支持拖拽添加 CNC 程序文件，清晰展示程序信息和刀具规格
+            </p>
+          </div>
+        </div>
+        
+                <div class="rounded-xl overflow-hidden shadow-xl hover-scale">
+          <img src="https://picsum.photos/seed/cnc4/800/600" alt="排序工作台" class="w-full h-auto">
+          <div class="p-6 bg-white">
+            <h3 class="text-xl font-bold mb-2">排序工作台</h3>
+            <p class="text-gray-600">
+              按刀具规格自动分组，支持拖拽调整顺序，标注加工类型，修改刀具号，灵活管理程序顺序
+            </p>
+          </div>
+        </div>
+        
+                <div class="rounded-xl overflow-hidden shadow-xl hover-scale">
+          <img src="https://picsum.photos/seed/cnc5/800/600" alt="设置界面" class="w-full h-auto">
+          <div class="p-6 bg-white">
+            <h3 class="text-xl font-bold mb-2">设置界面</h3>
+            <p class="text-gray-600">
+              灵活配置程序头/尾删除关键字，自定义连接代码，满足不同加工需求和机床类型
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="py-16 bg-primary/5">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div class="p-6">
+          <div class="text-4xl font-bold text-primary mb-2" id="counter-users">500+</div>
+          <p class="text-gray-600">活跃用户</p>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold text-primary mb-2" id="counter-programs">10,000+</div>
+          <p class="text-gray-600">程序处理</p>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold text-primary mb-2" id="counter-savings">75%</div>
+          <p class="text-gray-600">时间节省</p>
+        </div>
+        <div class="p-6">
+          <div class="text-4xl font-bold text-primary mb-2" id="counter-companies">50+</div>
+          <p class="text-gray-600">企业客户</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">用户的心声</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          来自 CNC 工程师的真实评价，了解 CNC 工作台如何改变他们的工作方式
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover-scale">
+          <div class="flex items-center mb-4">
+            <img src="https://picsum.photos/seed/user4/60/60" alt="用户头像" class="w-12 h-12 rounded-full mr-4">
+            <div>
+              <h4 class="font-bold">张工程师</h4>
+              <p class="text-gray-600 text-sm">某精密机械厂</p>
+            </div>
+          </div>
+          <div class="flex text-warning mb-3">
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+          </div>
+          <p class="text-gray-600">
+            "使用 CNC 工作台后，我们的程序串联工作效率提高了至少 70%，不再需要手动修改每个程序，大大减少了出错率。界面直观，操作简单，强烈推荐！"
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover-scale">
+          <div class="flex items-center mb-4">
+            <img src="https://picsum.photos/seed/user5/60/60" alt="用户头像" class="w-12 h-12 rounded-full mr-4">
+            <div>
+              <h4 class="font-bold">李师傅</h4>
+              <p class="text-gray-600 text-sm">某模具加工厂</p>
+            </div>
+          </div>
+          <div class="flex text-warning mb-3">
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star-half-o"></i>
+          </div>
+          <p class="text-gray-600">
+            "作为一名资深 CNC 操作人员，我用过很多程序管理软件，但 CNC 工作台是我用过的最直观、最高效的一个。特别是程序排序和坐标系管理功能，非常实用！"
+          </p>
+        </div>
+        
+                <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover-scale">
+          <div class="flex items-center mb-4">
+            <img src="https://picsum.photos/seed/user6/60/60" alt="用户头像" class="w-12 h-12 rounded-full mr-4">
+            <div>
+              <h4 class="font-bold">王主管</h4>
+              <p class="text-gray-600 text-sm">某自动化设备公司</p>
+            </div>
+          </div>
+          <div class="flex text-warning mb-3">
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+            <i class="fa fa-star"></i>
+          </div>
+          <p class="text-gray-600">
+            "我们车间有 10 台 CNC 机床，以前程序管理非常混乱。使用 CNC 工作台后，所有程序都能统一管理，加工准备时间缩短了一半，员工培训也变得简单多了。"
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section id="download" class="py-20 bg-gradient-to-br from-primary to-primary/80 text-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between">
+        <div class="md:w-1/2 mb-10 md:mb-0">
+          <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-6">
+            立即体验 CNC 工作台<br>
+            提升您的 CNC 编程效率
+          </h2>
+          <p class="text-lg text-white/90 mb-8 max-w-lg">
+            支持 Windows 和 macOS 系统，兼容各种 CNC 控制系统，免费试用 30 天，无功能限制
+          </p>
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="#" class="bg-white text-primary hover:bg-white/90 px-8 py-3 rounded-lg text-center font-medium transition-custom hover-scale">
+              <i class="fa fa-download mr-2"></i>立即下载 (v1.0.0)
+            </a>
+            <a href="#faq" class="bg-transparent border border-white text-white hover:bg-white/10 px-8 py-3 rounded-lg text-center font-medium transition-custom hover-scale">
+              <i class="fa fa-question-circle mr-2"></i>常见问题
+            </a>
+          </div>
+          <div class="mt-8 text-white/80">
+            <p><i class="fa fa-check-circle mr-2"></i> 支持 Windows 7/8/10/11 和 macOS 10.13 及以上版本</p>
+            <p><i class="fa fa-check-circle mr-2"></i> 免费试用 30 天，无功能限制</p>
+            <p><i class="fa fa-check-circle mr-2"></i> 自动检查更新，持续优化</p>
+          </div>
+        </div>
+        <div class="md:w-5/12">
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+            <h3 class="text-xl font-bold mb-6 text-center">获取最新版本</h3>
+            <form class="space-y-4">
+              <div>
+                <label for="name" class="block mb-2">姓名</label>
+                <input type="text" id="name" class="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="请输入您的姓名">
+              </div>
+              <div>
+                <label for="company" class="block mb-2">公司名称</label>
+                <input type="text" id="company" class="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="请输入您的公司名称">
+              </div>
+              <div>
+                <label for="email" class="block mb-2">邮箱地址</label>
+                <input type="email" id="email" class="w-full px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="请输入您的邮箱地址">
+              </div>
+              <button type="submit" class="w-full bg-white text-primary hover:bg-white/90 px-6 py-3 rounded-lg font-medium transition-custom hover-scale">
+                <i class="fa fa-download mr-2"></i>免费下载
+              </button>
+            </form>
+            <p class="text-center mt-4 text-sm text-white/70">
+              我们尊重您的隐私，不会向第三方分享您的信息
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section id="faq" class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">常见问题</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          了解关于 CNC 工作台的常见问题和解答
+        </p>
+      </div>
+      
+      <div class="max-w-3xl mx-auto">
+        <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button class="faq-toggle w-full text-left px-6 py-4 flex justify-between items-center focus:outline-none">
+              <h3 class="text-lg font-bold">CNC 工作台支持哪些操作系统？</h3>
+              <i class="fa fa-chevron-down text-primary transition-transform duration-300"></i>
+            </button>
+            <div class="faq-content px-6 pb-6 hidden">
+              <p class="text-gray-600">
+                CNC 工作台目前支持 Windows 7、Windows 8、Windows 10 和 Windows 11 操作系统，同时支持 macOS 10.13 及以上版本。32 位和 64 位版本均支持。
+              </p>
+            </div>
+          </div>
+          
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button class="faq-toggle w-full text-left px-6 py-4 flex justify-between items-center focus:outline-none">
+              <h3 class="text-lg font-bold">如何导入 Excel 程序单？</h3>
+              <i class="fa fa-chevron-down text-primary transition-transform duration-300"></i>
+            </button>
+            <div class="faq-content px-6 pb-6 hidden">
+              <p class="text-gray-600">
+                点击主界面的"读取程序单"按钮，在弹出的窗口中可以通过两种方式添加 Excel 文件：直接拖拽文件到列表区域，或点击"添加文件"按钮选择本地文件。支持 .xlsx 和 .xls 格式，Excel 文件需包含"NC名称"和"刀具"列。
+              </p>
+            </div>
+          </div>
+          
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button class="faq-toggle w-full text-left px-6 py-4 flex justify-between items-center focus:outline-none">
+              <h3 class="text-lg font-bold">CNC 工作台支持哪些 CNC 控制系统？</h3>
+              <i class="fa fa-chevron-down text-primary transition-transform duration-300"></i>
+            </button>
+            <div class="faq-content px-6 pb-6 hidden">
+              <p class="text-gray-600">
+                CNC 工作台生成的程序采用标准 G 代码格式，兼容大多数主流 CNC 控制系统，包括 Fanuc、Siemens、Mazak、Haas、Fagor 等。对于特定控制系统的特殊要求，可以通过自定义规则进行适配。
+              </p>
+            </div>
+          </div>
+          
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button class="faq-toggle w-full text-left px-6 py-4 flex justify-between items-center focus:outline-none">
+              <h3 class="text-lg font-bold">试用版有功能限制吗？</h3>
+              <i class="fa fa-chevron-down text-primary transition-transform duration-300"></i>
+            </button>
+            <div class="faq-content px-6 pb-6 hidden">
+              <p class="text-gray-600">
+                CNC 工作台提供 30 天免费试用，试用版拥有全部功能，没有任何功能限制。试用期满后，您需要购买许可证才能继续使用。我们也提供企业版和团队版，适合多人协作使用。
+              </p>
+            </div>
+          </div>
+          
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <button class="faq-toggle w-full text-left px-6 py-4 flex justify-between items-center focus:outline-none">
+              <h3 class="text-lg font-bold">如何更新到最新版本？</h3>
+              <i class="fa fa-chevron-down text-primary transition-transform duration-300"></i>
+            </button>
+            <div class="faq-content px-6 pb-6 hidden">
+              <p class="text-gray-600">
+                CNC 工作台启动时会自动检查更新，如有新版本，会提示您下载安装。您也可以通过主界面的"帮助"菜单手动检查更新。我们建议您保持软件为最新版本，以获得最新功能和问题修复。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <section id="contact" class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-5xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold mb-4">联系我们</h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            如有任何问题或建议，请随时联系我们，我们将尽快回复
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="bg-white rounded-xl p-8 shadow-lg">
+            <h3 class="text-xl font-bold mb-6">发送消息</h3>
+            <form class="space-y-4">
+              <div>
+                <label for="contact-name" class="block mb-2">姓名</label>
+                <input type="text" id="contact-name" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入您的姓名">
+              </div>
+              <div>
+                <label for="contact-email" class="block mb-2">邮箱</label>
+                <input type="email" id="contact-email" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入您的邮箱">
+              </div>
+              <div>
+                <label for="contact-message" class="block mb-2">留言</label>
+                <textarea id="contact-message" rows="4" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50" placeholder="请输入您的留言内容"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-custom hover-scale">
+                <i class="fa fa-paper-plane mr-2"></i>发送消息
+              </button>
+            </form>
+          </div>
+          
+          <div class="bg-white rounded-xl p-8 shadow-lg">
+            <h3 class="text-xl font-bold mb-6">联系方式</h3>
+            <div class="space-y-6">
+              <div class="flex items-start">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                  <i class="fa fa-envelope text-primary"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">邮箱</h4>
+                  <p class="text-gray-600">support@cncworkbench.com</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                  <i class="fa fa-phone text-primary"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">电话</h4>
+                  <p class="text-gray-600">400-123-4567</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                  <i class="fa fa-map-marker text-primary"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">地址</h4>
+                  <p class="text-gray-600">上海市浦东新区张江高科技园区科苑路88号</p>
+                </div>
+              </div>
+              
+              <div class="flex items-start">
+                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mr-4 flex-shrink-0">
+                  <i class="fa fa-clock-o text-primary"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold mb-1">工作时间</h4>
+                  <p class="text-gray-600">周一至周五: 9:00 - 18:00</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-8">
+              <h4 class="font-bold mb-4">关注我们</h4>
+              <div class="flex space-x-4">
+                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-custom hover-scale">
+                  <i class="fa fa-weixin"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-custom hover-scale">
+                  <i class="fa fa-weibo"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-custom hover-scale">
+                  <i class="fa fa-qq"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-custom hover-scale">
+                  <i class="fa fa-github"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+    <footer class="bg-dark text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-6">
+            <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
+              <i class="fa fa-cogs text-primary text-xl"></i>
+            </div>
+            <span class="text-xl font-bold">CNC 工作台</span>
+          </div>
+          <p class="text-gray-400 mb-6">
+            专业 CNC 程序串联解决方案，提高加工效率，降低出错率
+          </p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition-custom">
+              <i class="fa fa-weixin text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom">
+              <i class="fa fa-weibo text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom">
+              <i class="fa fa-qq text-xl"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition-custom">
+              <i class="fa fa-github text-xl"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-bold mb-6">产品</h3>
+          <ul class="space-y-3">
+            <li><a href="#features" class="text-gray-400 hover:text-white transition-custom">功能介绍</a></li>
+            <li><a href="#process" class="text-gray-400 hover:text-white transition-custom">使用流程</a></li>
+            <li><a href="#screenshots" class="text-gray-400 hover:text-white transition-custom">界面展示</a></li>
+            <li><a href="#download" class="text-gray-400 hover:text-white transition-custom">下载中心</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">版本更新</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-bold mb-6">资源</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">帮助文档</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">视频教程</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">常见问题</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">技术支持</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">合作伙伴</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h3 class="text-lg font-bold mb-6">公司</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">关于我们</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">联系我们</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">隐私政策</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">服务条款</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition-custom">加入我们</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p class="text-gray-400 mb-4 md:mb-0">
+          &copy; 2025 CNC 工作台. 保留所有权利.
+        </p>
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">隐私政策</a>
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">服务条款</a>
+          <a href="#" class="text-gray-400 hover:text-white transition-custom">Cookie 设置</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+    <script>
+    // 移动端菜单切换
+    document.getElementById('menu-toggle').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    });
+    
+    // 导航栏滚动效果和返回顶部按钮显示/隐藏
+    window.addEventListener('scroll', function() {
+      const navbar = document.getElementById('navbar');
+      const backToTop = document.getElementById('back-to-top');
+      
+      if (window.scrollY > 50) {
+        navbar.classList.add('shadow-md');
+        navbar.classList.remove('bg-white/90');
+        navbar.classList.add('bg-white');
+        
+        // 显示返回顶部按钮
+        backToTop.classList.add('show');
+      } else {
+        navbar.classList.remove('shadow-md');
+        navbar.classList.add('bg-white/90');
+        navbar.classList.remove('bg-white');
+        
+        // 隐藏返回顶部按钮
+        backToTop.classList.remove('show');
+      }
+    });
+    
+    // 返回顶部功能
+    document.getElementById('back-to-top').addEventListener('click', function() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+    
+    // 平滑滚动
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        
+        const targetId = this.getAttribute('href');
+        if (targetId === '#') return;
+        
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 80,
+            behavior: 'smooth'
+          });
+          
+          // 关闭移动菜单（如果打开）
+          const mobileMenu = document.getElementById('mobile-menu');
+          if (!mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+          }
+        }
+      });
+    });
+    
+    // FAQ 折叠功能
+    document.querySelectorAll('.faq-toggle').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        const content = this.nextElementSibling;
+        const icon = this.querySelector('i');
+        
+        content.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+        
+        // 关闭其他打开的 FAQ
+        document.querySelectorAll('.faq-toggle').forEach(otherToggle => {
+          if (otherToggle !== toggle) {
+            const otherContent = otherToggle.nextElementSibling;
+            const otherIcon = otherToggle.querySelector('i');
+            
+            if (!otherContent.classList.contains('hidden')) {
+              otherContent.classList.add('hidden');
+              otherIcon.classList.remove('rotate-180');
+            }
+          }
+        });
+      });
+    });
+    
+    // 初始化第一个 FAQ 为打开状态
+    document.querySelector('.faq-toggle').click();
+    
+    // 数字计数动画
+    function animateCounter(elementId, targetValue, duration = 2000) {
+      const element = document.getElementById(elementId);
+      if (!element) return;
+      
+      const startValue = 0;
+      const increment = targetValue / (duration / 16);
+      let currentValue = startValue;
+      
+      const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+          clearInterval(timer);
+          currentValue = targetValue;
+        }
+        
+        element.textContent = currentValue.toFixed(0) + (elementId === 'counter-users' ? '+' : (elementId === 'counter-programs' ? '+' : (elementId === 'counter-savings' ? '%' : '+')));
+      }, 16);
+    }
+    
+    // 检测元素是否在视口中
+    function isInViewport(element) {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+      );
+    }
+    
+    // 滚动时触发动画
+    let animationTriggered = false;
+    window.addEventListener('scroll', function() {
+      if (!animationTriggered && isInViewport(document.getElementById('counter-users'))) {
+        animateCounter('counter-users', 500);
+        animateCounter('counter-programs', 10000);
+        animateCounter('counter-savings', 75);
+        animateCounter('counter-companies', 50);
+        animationTriggered = true;
+      }
+    });
+    
+    // 悬浮导航交互
+    const floatingNavItems = document.querySelectorAll('#floating-nav .floating-nav-item');
+    
+    // 监听滚动，更新当前激活的导航项
+    window.addEventListener('scroll', function() {
+      // 调整滚动检测的数组顺序以匹配页面
+      const sections = ['top', 'features', 'process', 'feature-trial', 'screenshots', 'download', 'faq'];
+      let currentSection = '';
+      
+      sections.forEach(section => {
+        const element = document.getElementById(section);
+        const rect = element.getBoundingClientRect();
+        
+        if (rect.top <= 300 && rect.top >= -100) {
+          currentSection = section;
+        }
+      });
+      
+      floatingNavItems.forEach(item => {
+        if (item.getAttribute('data-target') === currentSection) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      
+      // 更新主导航栏的激活状态
+      document.querySelectorAll('header nav a').forEach(link => {
+        const href = link.getAttribute('href').substring(1);
+        if (href === currentSection) {
+          link.classList.add('text-primary', 'font-medium');
+          link.classList.remove('text-dark');
+        } else if (href !== '') {
+          link.classList.remove('text-primary', 'font-medium');
+          link.classList.add('text-dark');
+        }
+      });
+    });
+
+    // --- 新增：在线试用功能逻辑 ---
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const statusMessage = document.getElementById('status-message');
+    const resultArea = document.getElementById('result-area');
+    const resultBody = document.getElementById('result-body');
+    const exportCsvBtn = document.getElementById('export-csv');
+
+    let analysisResults = []; // 用于存储最终结果以供导出
+
+    // 触发文件选择框
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // 处理文件拖拽事件
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-primary', 'bg-primary/5');
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-primary', 'bg-primary/5');
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary', 'bg-primary/5');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    // 处理文件选择事件
+    fileInput.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+        e.target.value = ''; // 允许重复上传相同文件
+    });
+
+    function handleFile(file) {
+        if (!file.name.match(/\.(xlsx|xls)$/)) {
+            displayMessage('❌ 文件格式错误，请上传 .xlsx 或 .xls 文件', 'text-red-500');
+            return;
+        }
+
+        displayMessage('⚙️ 正在解析文件，请稍候...', 'text-primary');
+        resultArea.classList.add('hidden'); // 重置时隐藏结果
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                processData(jsonData);
+
+            } catch (error) {
+                console.error("解析失败:", error);
+                displayMessage('❌ 文件解析失败，请检查文件内容或格式。', 'text-red-500');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function processData(data) {
+        // 定义表头别名，逻辑与您的 Python 应用保持一致
+        const headerAliases = {
+            nc_name:   ['NC名称', '程序名'],
+            tool_spec: ['刀具'],
+            type:      ['类型', '類型'],
+            flute_len: ['刃长', '刃長', '刃高'],
+            tool_len:  ['刀长', '刀長', '总长', '长度']
+        };
+
+        let headerRowIndex = -1;
+        let columnMap = {};
+
+        // 1. 查找有效的表头行和列索引
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            const foundHeaders = {};
+            if(Array.isArray(row)) {
+                for (let j = 0; j < row.length; j++) {
+                    const cell = String(row[j] || '').trim();
+                    for (const key in headerAliases) {
+                        if (headerAliases[key].includes(cell)) {
+                            foundHeaders[key] = j;
+                        }
+                    }
+                }
+            }
+            if (foundHeaders.nc_name !== undefined && foundHeaders.tool_spec !== undefined) {
+                headerRowIndex = i;
+                columnMap = foundHeaders;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            displayMessage('❌ 未找到有效的表头（必须包含 "NC名称" 和 "刀具"）', 'text-red-500');
+            return;
+        }
+
+        // 2. 提取数据并处理
+        const processedData = [];
+        for (let i = headerRowIndex + 1; i < data.length; i++) {
+            const row = data[i];
+            if (row && row[columnMap.nc_name]) { // 确保行和NC名称存在
+                const toolSpec = String(row[columnMap.tool_spec] || '').trim();
+                // 过滤掉包含汉字的刀具规格
+                if (toolSpec && !/[\u4e00-\u9fa5]/.test(toolSpec)) {
+                     processedData.push({
+                        tool_spec: toolSpec,
+                        type: String(row[columnMap.type] || '未知').trim(),
+                        flute_len: parseFloat(row[columnMap.flute_len]) || 0,
+                        tool_len: parseFloat(row[columnMap.tool_len]) || 0,
+                    });
+                }
+            }
+        }
+
+        if (processedData.length === 0) {
+            displayMessage('🤷‍♂️ 未能在文件中找到有效的刀具数据。', 'text-yellow-600');
+            return;
+        }
+
+        // 3. 聚合数据 (类似 Pandas 的 groupby.agg)
+        const aggregated = {};
+        processedData.forEach(item => {
+            const key = `${item.tool_spec}|${item.type}`;
+            if (!aggregated[key]) {
+                aggregated[key] = {
+                    tool_spec: item.tool_spec,
+                    type: item.type,
+                    max_tool: -1,
+                    max_flute: -1,
+                };
+            }
+            if (item.tool_len > aggregated[key].max_tool) {
+                aggregated[key].max_tool = item.tool_len;
+            }
+            if (item.flute_len > aggregated[key].max_flute) {
+                aggregated[key].max_flute = item.flute_len;
+            }
+        });
+
+        // 4. 自然排序并准备显示
+        const finalResults = Object.values(aggregated);
+        // 使用 localeCompare 实现简单的自然排序
+        finalResults.sort((a, b) => a.tool_spec.localeCompare(b.tool_spec, undefined, {numeric: true, sensitivity: 'base'}));
+
+        analysisResults = finalResults; // 保存结果用于导出
+        displayResults(analysisResults);
+    }
+
+    function displayMessage(message, colorClass) {
+        statusMessage.innerHTML = message;
+        statusMessage.className = `text-center mt-4 text-lg ${colorClass}`;
+    }
+
+    function displayResults(results) {
+        displayMessage('✅ 解析成功！', 'text-green-600');
+        resultBody.innerHTML = ''; // 清空旧数据
+        results.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+            row.innerHTML = `
+                <td class="py-3 px-4 border-b">${item.tool_spec}</td>
+                <td class="py-3 px-4 border-b">${item.type}</td>
+                <td class="py-3 px-4 border-b">${item.max_tool > 0 ? item.max_tool.toFixed(3) : '未识别'}</td>
+                <td class="py-3 px-4 border-b">${item.max_flute > 0 ? item.max_flute.toFixed(3) : '未识别'}</td>
+            `;
+            resultBody.appendChild(row);
+        });
+        resultArea.classList.remove('hidden');
+    }
+
+    // 导出 CSV 功能
+    exportCsvBtn.addEventListener('click', () => {
+        if (analysisResults.length === 0) return;
+        
+        // 添加 BOM 头以确保 Excel 正确识别 UTF-8
+        const BOM = '\uFEFF';
+        const headers = ["刀具规格", "类型", "最大刀长 (mm)", "最大刃长 (mm)"];
+        const rows = analysisResults.map(item => [
+            `"${item.tool_spec}"`, // 加上引号以防逗号等特殊字符
+            `"${item.type}"`,
+            item.max_tool > 0 ? item.max_tool.toFixed(3) : '未识别',
+            item.max_flute > 0 ? item.max_flute.toFixed(3) : '未识别'
+        ]);
+
+        let csvContent = BOM + headers.join(",") + "\n" 
+            + rows.map(e => e.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "刀具长度分析结果.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+  </script>
+</body>
+</html>
